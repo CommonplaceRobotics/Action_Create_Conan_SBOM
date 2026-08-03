@@ -1,0 +1,36 @@
+name: 'Create incomplete SBOM'
+description: 'Creates an incomplete SBOM from a Conan 2 lockfile'
+
+inputs:
+  lockfile:
+    description: 'Conan 2 lockfile'
+    default: 'conan.lock'
+    required: false
+  sbom:
+    description: 'Name of the SBOM file to be created'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Conan
+      uses: conan-io/setup-conan@v1
+
+    # For generating the initial CycloneDX file
+    - name: Install CycloneDX extension for Conan
+      shell: bash
+      run: |
+        pip install 'cyclonedx-python-lib>=5.0.0,<6'
+        conan config install https://github.com/conan-io/conan-extensions.git
+
+    # For converting the CycloneDX version, since the generator can not generate the correct version
+    - name: Install CycloneDX CLI tool
+      shell: bash
+      run: |
+        cd ~
+        wget https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.32.0/cyclonedx-linux-x64
+        chmod +x cyclonedx-linux-x64
+  
+    - name: Create SBOM files
+      shell: bash
+      run: conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}
