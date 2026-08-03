@@ -7,7 +7,7 @@ Use it as follows:
 
 ```
 - name: Create incomplete SBOM
-  uses: CommonplaceRobotics/SW_Create_Conan_SBOM@v1
+  uses: CommonplaceRobotics/Action_Create_Conan_SBOM@v1
   with:
     lockfile: conan_linux.lock
     sbom: sbom_temp1.cdx.json
