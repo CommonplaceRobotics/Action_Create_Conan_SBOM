@@ -9,6 +9,10 @@ inputs:
   sbom:
     description: 'Name of the SBOM file to be created'
     required: true
+  conan_params:
+    description: 'Additional parameters for calling conan, e.g. profile'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -33,4 +37,4 @@ runs:
   
     - name: Create SBOM files
       shell: bash
-      run: conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}
+      run: conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} ${{ inputs.conan_params }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}
