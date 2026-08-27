@@ -13,6 +13,10 @@ inputs:
     description: 'Additional parameters for calling conan, e.g. profile'
     required: false
     default: ''
+  workdir:
+    description: 'Working directory'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -29,6 +33,7 @@ runs:
 
     # For converting the CycloneDX version, since the generator can not generate the correct version
     - name: Install CycloneDX CLI tool
+      if: ${{ hashFiles('~/cyclonedx-linux-x64') == '' }}
       shell: bash
       run: |
         cd ~
@@ -37,4 +42,8 @@ runs:
   
     - name: Create SBOM files
       shell: bash
-      run: conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} ${{ inputs.conan_params }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}
+      run: |
+        if [ -n "${{ inputs.workdir }}" ]; then
+            cd ${{ inputs.workdir }}
+        fi
+        conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} ${{ inputs.conan_params }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}

@@ -11,10 +11,12 @@ Use it as follows:
   with:
     lockfile: conan_linux.lock
     sbom: sbom_temp1.cdx.json
+	workdir: mydir
 ```
 
 With the following parameters:
 * lockfile: Conan 2 lockfile to read
 * sbom: name of the SBOM file to create
+* workdir: optional working directory
 
 This creates a CycloneDX v1.6 SBOM that should be completed using further tools.
