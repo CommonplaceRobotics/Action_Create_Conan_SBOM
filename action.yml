@@ -17,33 +17,46 @@ inputs:
     description: 'Working directory'
     required: false
     default: ''
+  venv_dir:
+    description: 'Python venv directory'
+    required: false
+    default: './conan_sbom_venv'
 
 runs:
   using: "composite"
   steps:
     - name: Install Conan
       uses: conan-io/setup-conan@v1
-
+      with:
+        use_venv: true
+  
+    - name: Install dependencies for CycloneDX extension for Conan
+      shell: bash
+      run: pip install 'cyclonedx-python-lib>=5.0.0,<6'
+    
     # For generating the initial CycloneDX file
     - name: Install CycloneDX extension for Conan
       shell: bash
-      run: |
-        pip install 'cyclonedx-python-lib>=5.0.0,<6'
-        conan config install https://github.com/conan-io/conan-extensions.git
+      run: conan config install https://github.com/conan-io/conan-extensions.git
 
     # For converting the CycloneDX version, since the generator can not generate the correct version
     - name: Install CycloneDX CLI tool
-      if: ${{ hashFiles('~/cyclonedx-linux-x64') == '' }}
+      if: ${{ hashFiles('${{ github.workspace }}/cyclonedx-cli') == '' }}
       shell: bash
       run: |
-        cd ~
-        wget https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.32.0/cyclonedx-linux-x64
-        chmod +x cyclonedx-linux-x64
-  
+        if [ "$RUNNER_OS" = "Linux" ]; then
+            echo "Downloading cyclonedx-cli for Linux..."
+            curl -L -o $GITHUB_WORKSPACE/cyclonedx-cli https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.33.1/cyclonedx-linux-x64
+            chmod +x $GITHUB_WORKSPACE/cyclonedx-cli
+        else
+            echo "Downloading cyclonedx-cli for Windows..."
+            curl -L -o $GITHUB_WORKSPACE/cyclonedx-cli https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.33.1/cyclonedx-win-x64.exe
+        fi
+
     - name: Create SBOM files
       shell: bash
       run: |
         if [ -n "${{ inputs.workdir }}" ]; then
             cd ${{ inputs.workdir }}
         fi
-        conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} ${{ inputs.conan_params }} | ~/cyclonedx-linux-x64 convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}
+        conan sbom:cyclonedx --format 1.4_json . --lockfile=${{ inputs.lockfile }} ${{ inputs.conan_params }} | $GITHUB_WORKSPACE/cyclonedx-cli convert --input-format json --output-format json --output-version v1_6 > ${{ inputs.sbom }}

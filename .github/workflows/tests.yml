@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Create incomplete SBOM
+      uses: $/
+      with:
+        workdir: tests
+        lockfile: conan_linux.lock
+        sbom: test_sbom_linux.cdx.json
+
+    - name: Export SBOM
+      uses: actions/upload-artifact@v7
+      with:
+        path: tests/test_sbom_linux.cdx.json
+        archive: false
+        
+  
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v7
+    
+    - name: Create incomplete SBOM
+      uses: $/
+      with:
+        workdir: tests
+        lockfile: conan_windows.lock
+        sbom: test_sbom_windows.cdx.json
+
+    - name: Export SBOM
+      uses: actions/upload-artifact@v7
+      with:
+        path: tests/test_sbom_windows.cdx.json
+        archive: false
+        
